@@ -65,3 +65,23 @@ riskratio(tab1, rev='neither')
 oddsratio(tab1, method='wald', rev='row')
 oddsratio(tab1, method='wald', rev='col')
 oddsratio(tab1, method='wald', rev='both')
+
+#####Question 4####
+#1. Calculate Risk Ratio
+piF <- 309/500
+piM <- 319/600
+(RR <- piF/piM)
+
+#2. Estimate Standard Error 
+SE2 <- sqrt(((1-piF)/309)+((1-piM)/319))
+
+#3. Take the logarithm of RR
+LRR <- log(RR)
+
+#4. Confidence Intervals
+
+(UB2 <- exp(LRR + 1.96*SE2))
+(LB2 <- exp(LRR - 1.96*SE2))
+
+
+
