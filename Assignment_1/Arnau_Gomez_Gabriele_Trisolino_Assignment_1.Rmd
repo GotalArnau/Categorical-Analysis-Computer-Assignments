@@ -1,0 +1,279 @@
+---
+title: 'Assignment 1'
+subtitle: "Analysis of 2X2 tables"
+author: "Arnau Gómez Català /n Gabriele Trisolino"
+date: "2026-11-24"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+```
+
+##Exercise 1:1
+
+**In a survey, 500 women och 600 men where asked about their opinion on legal abortion. Of the women, 309 were in favor of legal abortion and of the men the corresponding number was 319. The result of the survey is summarized in the two-way table below.**
+
+```{r, echo = FALSE}
+df <- data.frame(
+  Category = c("Women", "Men", "$\\Sigma$"),
+  `In favor` = c(309, 319, 628),
+  Against = c(191, 281, 472),
+  Total = c(500, 600, 1100),
+  check.names = FALSE
+)
+
+kable(
+  df,
+  col.names = c("", "In favor", "Against", "$\\Sigma$"),
+  align = c("l", "c", "c", "r"),
+  escape = FALSE
+)
+```
+
+**In exercises 1 to 4 below, the calculations should be carried out using basic arithmetic operators in R ($+, -, \cdot, /$) with each step clearly commented. For Exercise 5, the calculations should be repeated using built-in R functions.**
+
+### **1. Calculate the percentage in favor and against legal abortion for men and women separately.**
+
+```{r}
+prob_pf <- 309/500
+prob_nf <- 191/500
+prob_pm <- 319/600
+prob_nm <- 281/600
+```
+
+
+```{r, echo = FALSE}
+D <- cbind(c(prob_pf, prob_nf), c(prob_pm, prob_nm))
+rownames(D) <- c("Pro Abortion", "Against Abortion")
+
+           
+kable(D,
+      row.names = TRUE,
+      col.names = c("Female", "Male"),
+      digits = 4)
+```
+
+
+### **2. Do men and women have different opinions on legal abortion? Define a null and an alternative hypothesis and report all steps to calculate Pearsons X2 statistic and the likelihood ratio statistic, $G^2$. What conclusion can be made from this survey?**
+
+We define with $p_f$ the probability for a female to be in favor to legalize abortion and $p_m$ the same probability for male. Then the hypothesis test to see if they have different  opinion is the following:
+
+$$
+\begin{aligned}
+H_0: p_f = p_m \\
+H_1: p_f\neq p_m
+\end{aligned}
+$$
+alternative, if we define $n_f$ as the probability for a female to be against the legalization of abortion and $n_m$ the same probability for males. Then we can test:
+
+$$
+\begin{aligned}
+H_0: n_f = n_m \\
+H_1: n_f\neq n_m
+\end{aligned}
+$$
+
+These two tests are equivalent and will lead us to the same conclusions. We now can calculate the $\chi^2$ statistic as follows:
+
+$$ \chi^2 = \sum_{i} \frac{O_i - E_i}{E_i}$$
+
+```{r}
+#1. Calculate the expected frequencies
+e11 <- 628*500/1100
+e12 <- 472*500/1100
+e21 <- 600*628/1100
+e22 <- 472*600/1100
+
+#2. Sum of (observed - expected)^2 / expected
+o11 <- (309 - e11)^2/e11
+o12 <- (191 - e12)^2/e12 
+o21 <- (319 - e21)^2/e21
+o22 <- (281 - e22)^2 / e22
+
+(chisquared <- o11 + o12 + o21 + o22)
+```
+
+And the likelihood ratio statistic as:
+
+$$G^2=2 \sum_{i}O_i \cdot ln(\frac{O_i}{E_i})$$
+
+```{r}
+#1. sum of observed*log(observed/expected)
+l11 <- 309*log(309/e11)
+l12 <- 191*log(191/e12)
+l21 <- 319*log(319/e21)
+l22 <- 281*log(281/e22)
+
+(G2 <- 2*(l11+l12+l21+l22))
+```
+
+We have found that the $\chi^2$ statistics has a value of **`r round(chisquared, 4)`** and the likelihood ratio statistic a value of **`r round(G2, 4)`**. As the Pearson's $\chi^2$ statistic and the likelihood ratio follows a chi-squared distribution with one degree of freedom, for a confidence level of $95\%$, our calculated statistics are higher than the threshold **$\chi^2_{0.95}(1)=$ `r qchisq(0.95,1)`**, so this show it exists a statistical significant difference between females and males.
+
+
+### **3. Report all steps to estimate an odds ratio together with a $95\%$ confidence interval. Note that it is possible to formulate several odds ratios for a two-way table, depending on which event the odds refer to and what you conditioning on (an odds ratio is an ratio of two conditional odds). Interpret the estimated odds ratio and the corresponding confidence interval in the context of the survey.**
+
+
+
+```{r}
+#1. Calculate odds for males, females and odd ratio
+OddsM = 319/281
+OddsF = 309/191
+(OR=OddsF/OddsM)
+```
+
+To construct the Confidence Interval we will take the logarithm of the Odds Ratio and we can calculate it as:
+
+$$CI_{\widehat{OR}}(95\%) = exp\;({log(\widehat{OR}) \; \pm \; 1.96 \; \cdot \;SE_{log(\widehat{OR})})}$$
+
+where the Standard Error for the $log(\widehat{OR})$ is calculated as:
+
+$$
+SE_{log(\widehat{OR})} = \sqrt{\frac{1}{a}+\frac{1}{b}+\frac{1}{c}+\frac{1}{d}}
+$$
+
+```{r}
+#2. Estimate Standard Error
+SE_lor <- sqrt((1/309)+(1/191)+(1/319)+(1/281))
+
+#3. Take the logarithm of OR
+LOR <- log(OR)
+
+#3. Confidence Intervals 
+(LB <- exp(LOR - 1.96*SE_lor))
+(UB <- exp(LOR + 1.96*SE_lor))
+```
+
+We have obtained an Odds Ratio of **`r round(OR, 4)`** with a $95\%$ confidence interval of **[`r round(LB, 4)`, `r round(UB, 4)`]**. This indicates that the odds of women being in favor are $40\%$ higher than the odds for men. Since the $95\%$ confidence interval does not include 1, this association is statistically significant at the $95\%$ confidence level.
+
+
+### **4. Report all steps to estimate a risk ratio (relative risk) together with a 95 % confidence interval. The risk ratio should correspond to the reported odds ratio in Question 3. Interpret the risk ratio and the confidence interval in the same way as in Question 3.**
+
+```{r}
+#1. Calculate Risk Ratio
+piF <- 309/500
+piM <- 319/600
+(RR <- piF/piM)
+```
+
+To construct this Confidence Interval we will take the logarithm of the Risk Ratio and we can calculate it similar as the previous one:
+
+$$CI_{\widehat{RR}}(95\%) = exp\;({log(\widehat{RR}) \; \pm \; 1.96 \; \cdot \;SE_{log(\widehat{RR})})}$$
+
+where the Standard Error for the $log(\widehat{RR})$ is calculated as:
+
+$$
+SE_{log(\widehat{RR})} = \sqrt{\frac{1-\frac{a}{a+b}}{a}+\frac{1-\frac{c}{c+d}}{c}}
+$$
+
+```{r}
+#2. Estimate Standard Error 
+SE2 <- sqrt(((1-piF)/309)+((1-piM)/319))
+
+#3. Take the logarithm of RR
+LRR <- log(RR)
+
+#4. Confidence Intervals
+
+(UB2 <- exp(LRR + 1.96*SE2))
+(LB2 <- exp(LRR - 1.96*SE2))
+```
+
+Now we see a Risk Ratio of **`r round(RR, 4)`**, and a confidence interval at $95\%$ of **[`r round(LB2, 4)`, `r round(UB2, 4)`]**. This shows that women are 1.16 times as likely to be in favor compared to men, representing a statistically significant $16\%$ higher probability of support among women (Since the $95\%$ confidence interval does not include 1).
+
+\newpage
+
+### **5. Below is shown how availible R-functions can be used to perform the calculations in Question 1 $-$ 4 (other R-functions might work as well). Run the code and check that your previous calculations are correct. Regarding the odds ratio and risk ratio, you might need to change the rev option in R (see below) to get agreement between them.**
+
+By considering the results above, we can look one by one if they match the solutions given to us in the assignment. Starting with the very first part of the exercice, we have shown that:
+
+```{r, echo = FALSE}
+kable(D,
+      row.names = TRUE,
+      col.names = c("Female", "Male"),
+      digits = 4)
+```
+
+And the solution you provide:
+
+```{r}
+tab1<- as.table(rbind(c(309, 191), c(319, 281)))
+dimnames(tab1) <- list(gender = c("women", "men"),opinion = c("favor","against"))
+addmargins(tab1)
+addmargins(prop.table(tab1,1),2)
+```
+
+We can see that the obtained results are identical to those provided in the problem statement.
+
+Then, we can move to the second part, where we obtained:
+
+```{r, echo = FALSE}
+F <- cbind(c(G2, chisquared))
+rownames(F) <- c("Likelihood Ratio Statistic", "Chi-Squared Statistic")
+kable(F,
+      row.names = TRUE,
+      digits = 4)
+```
+And the results provided:
+
+```{r}
+chisq.test(tab1,correct=FALSE)
+library(MASS) # the MASS package must have been installed
+loglm(~gender+opinion,tab1)
+# The function loglm fits a loglinear model, but we leave the details about that.
+# Loglinear models will be handled in assignment 3 but with the function glm instead of loglm.
+```
+
+Our calculations also match the values given in the exercise statement. We can continue with the third and fourth part of the exercise to finish. We can summarise our results as:
+
+```{r, echo = FALSE}
+T <- rbind(c(OR, LB, UB), c(RR, LB2, UB2))
+rownames(T) <- c("Odds Ratio", "Risk Ratio")
+
+kable(T,
+      row.names = TRUE,
+      col.names = c("Point Estimation", "CI Lower Bound", "CI Upper Bound"),
+      digit = 4)
+```
+
+And the results provided look like:
+
+```{r}
+library(epitools) # the epitools package must have been installed
+oddsratio(tab1, method = "wald", rev="both")$measure
+riskratio(tab1,rev="both")$measure
+
+```
+
+Comparing, the computed values confirm the results stated in the exercise.
+
+
+
+
+\newpage
+
+## Exercise 1:2
+
+**In this exercise you will conduct the same kind of analyses as in Exercise 1:1 for several two-way tables. You can use the same R-functions as in 1:1.5 and no step-by-step calculation is required. Summarize the results in your own words and refer to relevant R-outputs, that you include.**
+
+**At the University of California, Berkeley, in total 2691 men and 1835 women were applied to graduate studies, in year 1975. Among those, 1198 men and 557 women were admitted.**
+
+### **Enter these data into R and make an analysis as in Excercise 1:1 ( Pearsons $\chi^2$ and $G^2$, odds ratio and risk ratio with confidence interval). Interpret the result. Be careful to specify which odds and risk ratios you have calculated and how they should be interpreted.**
+
+```{r}
+
+```
+
+### **Investigate what will happen if you replace all numbers in the table to one tenth of the original values. Compare the output with the one in Question 1. Which values have changed and how? Repeat and replace the numbers to one hundredth of the original and comment on what you observe. (Hint: The R command round('table name'/10,0) may be useful.)**
+
+```{r}
+
+```
+
+### **Based on the result above you should now create a completely new two-way table with cell counts that you chose by yourself, such that the sample odds ratio ($\widehat\theta$) is within the interval (0.99, 1.01) and the corresponding population odds ratio ($\theta$) differ from 1 significantly. Make a comment about the relevance to declare 'statistical significance' in a situation like this. How would you prefer to report the result? Make sure that you understand this excercise and ask for help if needed.**
+
+```{r}
+
+```
+
