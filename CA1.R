@@ -83,5 +83,47 @@ LRR <- log(RR)
 (UB2 <- exp(LRR + 1.96*SE2))
 (LB2 <- exp(LRR - 1.96*SE2))
 
+###Question 2.1####
+tab2<- as.table(rbind(c(1198, 1493), c(557, 1278)))
+dimnames(tab2) <- list(gender = c("Men", "Women"),admission = c("Admitted","Rejected"))
+addmargins(tab2)
+addmargins(prop.table(tab2,1),2)
+# 1.Chi-squared test 
+chisq.test(tab2, correct = FALSE)
+
+# 2. Likelihood Ratio test (G^2)
+install.packages('MASS')
+library(MASS)
+loglm(~ gender + admission, data = tab2)
+
+# 3. Odds Ratio (Men vs. Women for Admission)
+library(epitools)
+oddsratio(tab2, method = "wald", rev = "neither")
+
+# 4. Risk Ratio (Men vs. Women for Admission)
+riskratio(tab2, rev = "neither")
+
+#####Question 2.2####
+tab_10 <- round(tab2 / 10, 0)
+chisq.test(tab_10, correct = FALSE)
+library(MASS); loglm(~ gender + admission, data = tab_10)
+library(epitools)
+oddsratio(tab_10, method = "wald", rev = "neither")
+riskratio(tab_10, rev = "neither")
+
+tab_100 <- round(tab2 / 100, 0)
+chisq.test(tab_100, correct = FALSE)
+loglm(~ gender + admission, data = tab_100)
+oddsratio(tab_100, method = "wald", rev = "neither")
+riskratio(tab_100, rev = "neither")
+
+#####Question 2.3####
+tab3<- as.table(rbind(c(10000, 10000), c(10001, 10005)))
+dimnames(tab3) <- list(gender = c("Men", "Women"),admission = c("Admitted","Rejected"))
+addmargins(tab3)
+addmargins(prop.table(tab3,1),2)
+loglm(~ gender + admission, data = tab3)
+oddsratio(tab3, method = "wald", rev = "neither")
+riskratio(tab_100, rev = "neither")
 
 
