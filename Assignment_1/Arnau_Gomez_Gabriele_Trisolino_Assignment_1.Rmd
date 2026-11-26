@@ -9,6 +9,8 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
+library(epitools)
+library(MASS)
 ```
 
 ##Exercise 1:1
@@ -259,21 +261,101 @@ Comparing, the computed values confirm the results stated in the exercise.
 
 **At the University of California, Berkeley, in total 2691 men and 1835 women were applied to graduate studies, in year 1975. Among those, 1198 men and 557 women were admitted.**
 
-### **Enter these data into R and make an analysis as in Excercise 1:1 ( Pearsons $\chi^2$ and $G^2$, odds ratio and risk ratio with confidence interval). Interpret the result. Be careful to specify which odds and risk ratios you have calculated and how they should be interpreted.**
+### **1. Enter these data into R and make an analysis as in Excercise 1:1 ( Pearsons $\chi^2$ and $G^2$, odds ratio and risk ratio with confidence interval). Interpret the result. Be careful to specify which odds and risk ratios you have calculated and how they should be interpreted.**
 
 ```{r}
-
+tab2<- as.table(rbind(c(1198, 1493), c(557, 1278)))
+dimnames(tab2) <- list(gender = c("Men", "Women"),admission = c("Admitted","Rejected"))
+addmargins(tab2)
+(addmargins(prop.table(tab2,1),2))
 ```
 
-### **Investigate what will happen if you replace all numbers in the table to one tenth of the original values. Compare the output with the one in Question 1. Which values have changed and how? Repeat and replace the numbers to one hundredth of the original and comment on what you observe. (Hint: The R command round('table name'/10,0) may be useful.)**
+As shown in the proportions table, men are almost equally distributed across the two categories (Admitted and Rejected). However, among women, we observe a tendency towards rejection. However, we need appropriate statistical tests to determine whether this difference is statistically significant.
+
+We can start by applying both the chi-squared test and the likelihood ratio test. We define the hypotheses as follows:
+
+$$
+\begin{aligned}
+H_0: A_f = A_m \\
+H_1: A_f\neq A_m
+\end{aligned}
+$$
+
+where $A_f$ denotes the proportion of women admitted to their respective programs, and $A_m$ denotes the corresponding proportion for men. Let's examine the values of the test statistics.
 
 ```{r}
+# Statistical Tests:
 
+loglm(~ gender + admission, data = tab2)
 ```
 
-### **Based on the result above you should now create a completely new two-way table with cell counts that you chose by yourself, such that the sample odds ratio ($\widehat\theta$) is within the interval (0.99, 1.01) and the corresponding population odds ratio ($\theta$) differ from 1 significantly. Make a comment about the relevance to declare 'statistical significance' in a situation like this. How would you prefer to report the result? Make sure that you understand this excercise and ask for help if needed.**
+Both tests are highly significant, with $\chi^2=$ `r loglm(~ gender + admission, data = tab2)$pearson` and $LRT=$ `r loglm(~ gender + admission, data = tab2)$lrt`. Therefore, there is strong statistical evidence that men and women are not admitted to university programs at the same proportion.
+
+We can quantify this difference by computing the Odds Ratio and Risk Ratio:
 
 ```{r}
+# 3. Odds Ratio (Men vs. Women for Admission)
+oddsratio(tab2, method = "wald", rev = "both")$measure
 
+# 4. Risk Ratio (Men vs. Women for Admission)
+riskratio(tab2, rev = "both")$measure
 ```
 
+The odds of being admitted for men are 84% higher than for women. Looking at the Risk Ratio, the probability of admission for men is 46% higher than for women.
+
+Regarding the confidence intervals, $IC_{\widehat{OR}} = [1.6244,2.0867]$ and $IC_{\widehat{RR}} = [1.3523,1.5906]$, neither interval includes 1. Therefore, both measures provide further evidence of a statistically significant difference in admission proportions between the two sex groups.
+
+### **2. Investigate what will happen if you replace all numbers in the table to one tenth of the original values. Compare the output with the one in Question 1. Which values have changed and how? Repeat and replace the numbers to one hundredth of the original and comment on what you observe. (Hint: The R command round('table name'/10,0) may be useful.)**
+
+```{r}
+(tab_10 <- round(tab2 / 10, 0))
+(addmargins(prop.table(tab_10,1),2))
+```
+
+```{r}
+loglm(~ gender + admission, data = tab_10)
+```
+
+The values of our test statistics have changed. However, the conclusions remain the same, although with a lower level of statistical significance. We still find strong evidence of a difference between the admission proportions. Nevertheless, compared with the previous results, the evidence is somewhat weaker, reducing our confidence in the conclusions.
+
+```{r}
+oddsratio(tab_10, method = "wald", rev = "both")$measure
+riskratio(tab_10, rev = "both")$measure
+```
+
+The Odds Ratio and Risk Ratio remain exactly the same as before. We can conclude that the sample size does not affect the point estimates of these measures, but it does affect their confidence intervals, which are now wider. Neither interval contains $1$, so the statistical conclusions remain the same as in the previous exercise.
+
+```{r}
+(tab_100 <- round(tab2 / 100, 0))
+(addmargins(prop.table(tab_10,1),2))
+```
+
+
+```{r}
+loglm(~ gender + admission, data = tab_100)
+```
+
+As the sample size continues to decrease, the statistical significance of the difference in proportions also decreases. At this point, there is no longer sufficient statistical evidence to conclude that such a difference exists.
+
+```{r}
+oddsratio(tab_100, method = "wald", rev = "both")$measure
+riskratio(tab_100, rev = "both")$measure
+```
+
+Although the point estimates of both measures remain almost identical to the previous ones, the confidence intervals show a completely different result. They now include \\(1\\), meaning that, at a 95% confidence level, we cannot conclude that men have higher odds or a higher probability of being admitted than women. This is due to the fact that the sample size is not big enough to have reliable inference results.
+
+### **3. Based on the result above you should now create a completely new two-way table with cell counts that you chose by yourself, such that the sample odds ratio ($\widehat\theta$) is within the interval (0.99, 1.01) and the corresponding population odds ratio ($\theta$) differ from 1 significantly. Make a comment about the relevance to declare 'statistical significance' in a situation like this. How would you prefer to report the result? Make sure that you understand this excercise and ask for help if needed.**
+
+```{r}
+tab3<- as.table(rbind(c(502000, 498000), c(500000, 500000)))
+dimnames(tab3) <- list(gender = c("Men", "Women"),admission = c("Admitted","Rejected"))
+addmargins(tab3)
+addmargins(prop.table(tab3,1),2)
+loglm(~ gender + admission, data = tab3)
+oddsratio(tab3, method = "wald", rev = "both")$measure
+```
+We would report the results as follows:
+
+The estimated odds ratio was $1.008$ ($95\%$ CI: $[1.002, 1.014]$; $p=0.0047$), indicating a statistically significant association. However, such a small difference might be negligible in practical terms.
+
+The statistical significance arises partly because the sample size is huge ($2$ million observations), which reduces the standard error and allows even very small effects to be detected and also narrows the confidence intervals. Therefore, statistical significance should be interpreted alongside the context of the study.
