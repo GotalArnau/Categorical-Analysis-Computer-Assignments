@@ -1,7 +1,7 @@
 ---
 title: 'Assignment 1'
 subtitle: "Analysis of 2X2 tables"
-author: "Arnau Gómez Català /n Gabriele Trisolino"
+author: "Arnau Gómez Català            Gabriele Trisolino"
 date: "2026-11-24"
 output: pdf_document
 ---
@@ -147,7 +147,7 @@ LOR <- log(OR)
 (UB <- exp(LOR + 1.96*SE_lor))
 ```
 
-We have obtained an Odds Ratio of **`r round(OR, 4)`** with a $95\%$ confidence interval of **[`r round(LB, 4)`, `r round(UB, 4)`]**. This indicates that the odds of women being in favor are $40\%$ higher than the odds for men. Since the $95\%$ confidence interval does not include 1, this association is statistically significant at the $95\%$ confidence level.
+We have obtained an Odds Ratio of **`r round(OR, 4)`** with a $95\%$ confidence interval of **[`r round(LB, 4)`, `r round(UB, 4)`]**. This indicates that the odds of women being in favor are $42.5\%$ higher than the odds for men. Since the $95\%$ confidence interval does not include 1, this association is statistically significant at the $95\%$ confidence level.
 
 
 ### **4. Report all steps to estimate a risk ratio (relative risk) together with a 95 % confidence interval. The risk ratio should correspond to the reported odds ratio in Question 3. Interpret the risk ratio and the confidence interval in the same way as in Question 3.**
@@ -323,7 +323,7 @@ oddsratio(tab_10, method = "wald", rev = "both")$measure
 riskratio(tab_10, rev = "both")$measure
 ```
 
-The Odds Ratio and Risk Ratio remain exactly the same as before. We can conclude that the sample size does not affect the point estimates of these measures, but it does affect their confidence intervals, which are now wider. Neither interval contains $1$, so the statistical conclusions remain the same as in the previous exercise.
+The Odds Ratio and Risk Ratio remain almost the same as before. We can conclude that the sample size does not affect the point estimates of these measures, but it does affect their confidence intervals, which are now wider. Neither interval contains $1$, so the statistical conclusions remain the same as in the previous exercise.
 
 ```{r}
 (tab_100 <- round(tab2 / 100, 0))
